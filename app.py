@@ -1,216 +1,87 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import yfinance as yf
-import matplotlib.pyplot as plt
+from datetime import timedelta
 
-# Load data
+# Judul aplikasi
+st.title("Perbandingan Saham dengan Metode Persentase dan VaR")
+
+# Load dataset
 final_df = pd.read_csv('final_df.csv', delimiter=',')
-
-# Judul Aplikasi
-st.title('Risk Projection')
-
-# Input pengguna untuk target
-st.header("Input Stock Target Data")
-
-# Menggunakan st.columns untuk mengatur layout
-col1, col2 = st.columns(2)  # Baris pertama: 2 kolom
-col3, col4 = st.columns(2)  # Baris kedua: 2 kolom
-
-# Input di baris pertama
-with col1:
-    target_stock = st.text_input("Stock Target Code (ex: CBDK.JK):", value="CBDK.JK")
-with col2:
-    target_roa = st.number_input("Return on Assets (RoA) Target (%):", value=14.69)
-
-# Input di baris kedua
-with col3:
-    target_mc = st.number_input("Market Cap Target (in IDR):", value=624462420000)
-with col4:
-    target_roe = st.number_input("Return on Equity (RoE) Target (%):", value=35.61)
-
-# Daftar pilihan subsektor
-subsektor_options = [
-    'Oil, Gas, & Coal', 'Basic Materials', 'Banks',
-    'Healthcare Equipment & Providers', 'Software & IT Service',
-    'Logistics & Deliveries', 'Food & Beverage', 'Industrial Goods',
-    'Consumer Services', 'Telecommunication', 'Industrial Services',
-    'Retailing', 'Automobiles & Components', 'Alternative Energy',
-    'Media & Entertainment', 'Properties & Real Estate',
-    'Heavy Constructions & Civil', 'Nondurable Household Products ',
-    'Leisure Goods', 'Household Goods', 'Utilities',
-    'Food & Staples Retailing ', 'Technology Hardware',
-    'Financing Service', 'Property & Real Estate',
-    'Phramaceuticals & Healthcare', 'Utilites',
-    'Multi Sector Holdings', 'Nondurable Household Products',
-    'Apparel & Luxury Goods'
-]
-
-# Dropdown untuk memilih subsektor
-target_subsektor = st.selectbox("Sub Sektor Target:", options=subsektor_options, index=subsektor_options.index('Property & Real Estate'))
-
-# Konversi ke DataFrame
 comparison_table = pd.DataFrame(final_df)
 
+# Input kode saham
+st.sidebar.header("Input Saham Target")
+target_stock = st.sidebar.text_input("Kode Saham Target", value="ARCI.JK")
+
+# Ambil data saham target dari final_df
+if target_stock in final_df['Kode'].values:
+    stock_data = final_df[final_df['Kode'] == target_stock].iloc[0]
+    target_roa = stock_data['RoA']
+    target_mc = stock_data['Market Cap']
+    target_roe = stock_data['RoE']
+    target_subsektor = stock_data['Sub Sektor']
+else:
+    st.error("Kode saham tidak ditemukan dalam dataset.")
+    st.stop()
+
+# Fungsi untuk menghitung persentase perbedaan
 def calculate_percentage(filtered_table):
-    """
-    Menghitung persentase perbedaan dengan saham target.
-    """
-    total_percentage = {}
-    percentage_details = {}
+    data = []
+    for index, row in filtered_table.iterrows():
+        differences = {
+            'Kode': row['Kode'],
+            'RoA_Percentage': abs(row['RoA'] - target_roa) / abs(target_roa) * 100,
+            'Market_Cap_Percentage': abs(row['Market Cap'] - target_mc) / abs(target_mc) * 100,
+            'RoE_Percentage': abs(row['RoE'] - target_roe) / abs(target_roe) * 100,
+        }
+        differences['Total_Percentage'] = sum(differences.values()) - differences['Kode']
+        data.append(differences)
+    
+    df = pd.DataFrame(data).sort_values(by='Total_Percentage')
+    return df.head(3)
 
-    for metric, target_value in zip(['RoA', 'Market Cap', 'RoE'], [target_roa, target_mc, target_roe]):
-        differences = abs(filtered_table[metric] - target_value)
-        percentage = (differences / abs(target_value)) * 100  # Gunakan abs untuk menghindari pembagian negatif
-        filtered_table[f'{metric}_Percentage'] = percentage
-
-        for stock, percent in zip(filtered_table['Kode'], percentage):
-            if stock not in total_percentage:
-                total_percentage[stock] = 0
-                percentage_details[stock] = {}
-            total_percentage[stock] += percent
-            percentage_details[stock][metric] = percent
-
-    # Urutkan berdasarkan total persentase terkecil (mendekati 0)
-    sorted_total = sorted(total_percentage.items(), key=lambda x: abs(x[1]))[:3]
-
-    return sorted_total, percentage_details
-
+# Fungsi untuk membandingkan dalam subsektor
 def compare_with_subsektor():
-    """
-    Membandingkan dengan saham dalam subsektor yang sama.
-    """
     filtered_table = comparison_table[(comparison_table['Sub Sektor'] == target_subsektor) &
                                       (comparison_table['Kode'] != target_stock)]
     if filtered_table.empty:
-        st.warning(f"Warning: Tidak ada saham lain dalam subsektor {target_subsektor} untuk dibandingkan.\n")
-        return [], {}
-
+        st.warning(f"Tidak ada saham lain dalam subsektor {target_subsektor} untuk dibandingkan.")
+        return pd.DataFrame()
     return calculate_percentage(filtered_table)
 
+# Fungsi untuk membandingkan tanpa subsektor
 def compare_without_subsektor():
-    """
-    Membandingkan dengan semua saham tanpa mempertimbangkan subsektor.
-    """
     filtered_table = comparison_table[comparison_table['Kode'] != target_stock]
     return calculate_percentage(filtered_table)
 
 # Jalankan perbandingan
-min_stocks_with_subsektor, details_with_subsektor = compare_with_subsektor()
-min_stocks_without_subsektor, details_without_subsektor = compare_without_subsektor()
+df_with_subsektor = compare_with_subsektor()
+df_without_subsektor = compare_without_subsektor()
 
-# Fungsi untuk membuat DataFrame dari hasil perbandingan
-def create_result_df(sorted_stocks, details):
-    """
-    Membuat DataFrame dari hasil perbandingan.
-    """
-    data = []
-    for stock, _ in sorted_stocks:
-        row = {
-            'Kode': stock,
-            'RoA': f"{details[stock]['RoA']:.2f}%",
-            'Market Cap': f"{details[stock]['Market Cap']:.2f}%",
-            'RoE': f"{details[stock]['RoE']:.2f}%"
-        }
-        data.append(row)
-    return pd.DataFrame(data)
+st.subheader("Perbandingan Saham dalam Subsektor yang Sama")
+st.dataframe(df_with_subsektor)
 
-# Fungsi untuk menghitung Bollinger Bands
-def calculate_bollinger_bands(data, window=15):
-    """
-    Menghitung Bollinger Bands.
-    """
-    sma = data.rolling(window=window).mean()
-    std = data.rolling(window=window).std()
-    upper_band = sma + (2 * std)
-    lower_band = sma - (2 * std)
-    return sma, upper_band, lower_band
+st.subheader("Perbandingan Saham Tanpa Mempertimbangkan Subsektor")
+st.dataframe(df_without_subsektor)
 
-# Tampilkan hasil dengan subsektor jika ada
-st.write("Results considering Sub-Sector")
-if min_stocks_with_subsektor:
-    df_with_subsektor = create_result_df(min_stocks_with_subsektor, details_with_subsektor)
-    col_df, col_plot = st.columns(2)
+# Perhitungan VaR
+st.header("Perhitungan Value at Risk (VaR)")
 
-    with col_df:
-        st.write('Closest Stock Considering Sub-Sector')
-        st.dataframe(df_with_subsektor, use_container_width=True)  # Perbaikan di sini
+def calculate_var(stock_code):
+    stock_date = pd.to_datetime(final_df[final_df['Kode'] == stock_code]['Date'].iloc[0])
+    data = yf.download(stock_code, start=stock_date, end=stock_date + timedelta(days=365), interval='1wk')['Close']
+    daily_returns = data.pct_change().dropna()
+    return np.percentile(daily_returns, 1), np.percentile(daily_returns, 99)
 
-    with col_plot:
-        subsektor_stock = min_stocks_with_subsektor[0][0]
-        target_date_subsektor = final_df[final_df['Kode'] == subsektor_stock]['Date'].iloc[0]
+var_data = []
+for stock in [target_stock] + df_with_subsektor['Kode'].tolist():
+    try:
+        var_1, var_99 = calculate_var(stock)
+        var_data.append({'Kode': stock, 'VaR 1%': var_1, 'VaR 99%': var_99})
+    except:
+        st.warning(f"Data tidak tersedia untuk {stock}")
 
-        try:
-            st.write(f"Daily Returns Graph; {subsektor_stock}")
-            data = yf.download(subsektor_stock, start=target_date_subsektor, end=pd.to_datetime(target_date_subsektor) + pd.DateOffset(years=1))['Close']
-            daily_returns_1 = data.pct_change().dropna()
-
-            # Hitung Bollinger Bands
-            sma, upper_band, lower_band = calculate_bollinger_bands(daily_returns_1)
-
-            data = data.squeeze()
-            sma = sma.squeeze()
-            upper_band = upper_band.squeeze()
-            lower_band = lower_band.squeeze()
-
-            plt.figure(figsize=(12, 5)) # Ukuran plot disesuaikan
-            plt.plot(daily_returns_1.index, daily_returns_1.values, label='Daily Return')
-            plt.plot(sma, label='SMA (10)')
-            plt.plot(upper_band, label='Upper Band', linestyle='dashed', linewidth=1.1)
-            plt.plot(lower_band, label='Lower Band', linestyle='dashed', linewidth=1.1)
-            plt.fill_between(daily_returns_1.index, lower_band, upper_band, color='gray', alpha=0.2)
-            plt.title(f"{subsektor_stock} Daily Returns")
-            plt.xlabel("Date")
-            plt.ylabel("Daily Returns")
-            plt.legend()
-            plt.grid(True)
-            st.pyplot(plt)
-        except Exception as e:
-            st.error(f"Error fetching data for {subsektor_stock}: {e}")
-else:
-    st.write("Tidak ada hasil dalam subsektor yang sama.\n")
-
-# Bagian tanpa subsektor
-st.write("Results without considering Sub-Sector")
-if min_stocks_without_subsektor:
-    df_without_subsektor = create_result_df(min_stocks_without_subsektor, details_without_subsektor)
-
-    # Bagi layout menjadi dua kolom: DataFrame dan Plot
-    col_df, col_plot = st.columns(2)
-
-    with col_df:
-        st.write('Closest Stock without Considering Sub-Sector')
-        st.dataframe(df_without_subsektor, use_container_width=True)  # Perbaikan di sini
-
-    with col_plot:
-        not_subsektor_stock = min_stocks_without_subsektor[0][0]
-        target_date_not_subsektor = final_df[final_df['Kode'] == not_subsektor_stock]['Date'].iloc[0]
-
-        try:
-            st.write(f"Daily Returns Graph; {not_subsektor_stock}")
-            data = yf.download(not_subsektor_stock, start=target_date_not_subsektor, end=pd.to_datetime(target_date_not_subsektor) + pd.DateOffset(years=1))['Close']
-            daily_returns_2 = data.pct_change().dropna()
-
-            # Hitung Bollinger Bands
-            sma, upper_band, lower_band = calculate_bollinger_bands(daily_returns_2)
-            # Ubah menjadi 1D array
-            data = data.squeeze()
-            sma = sma.squeeze()
-            upper_band = upper_band.squeeze()
-            lower_band = lower_band.squeeze()
-
-            plt.figure(figsize=(12, 5)) # Ukuran plot disesuaikan
-            plt.plot(daily_returns_2.index, daily_returns_2.values, label='Daily Return')
-            plt.plot(sma, label='SMA (10)')
-            plt.plot(upper_band, label='Upper Band', linestyle='dashed', linewidth=1.1)
-            plt.plot(lower_band, label='Lower Band', linestyle='dashed', linewidth=1.1)
-            plt.fill_between(daily_returns_2.index, lower_band, upper_band, color='gray', alpha=0.2)
-            plt.title(f"{not_subsektor_stock} Daily Returns")
-            plt.xlabel("Date")
-            plt.ylabel("Daily Returns")
-            plt.legend()
-            plt.grid(True)
-            st.pyplot(plt)
-        except Exception as e:
-            st.error(f"Error fetching data for {not_subsektor_stock}: {e}")
-else:
-    st.write("Tidak ada hasil yang ditemukan.\n")
+var_df = pd.DataFrame(var_data)
+st.dataframe(var_df)
