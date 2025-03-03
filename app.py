@@ -112,7 +112,7 @@ def create_result_df(sorted_stocks, details):
             'Total Aset': f"{details[stock]['Total Aset']:.2f}%",
             'Total Ekuitas': f"{details[stock]['Total Ekuitas']:.2f}%",
             'Market Cap': f"{details[stock]['Market Cap']:.2f}%",
-            'Laba Bersih': f"{details[stock]['Laba Bersih']}%",
+            'Laba Bersih': f"{details[stock]['Laba Bersih']:.2f}%",
         }
         data.append(row)
     return pd.DataFrame(data)
