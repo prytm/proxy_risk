@@ -12,21 +12,23 @@ st.title('Risk Projection')
 # Input pengguna untuk target
 st.header("Input Stock Target Data")
 
+target_stock = st.text_input("Stock Target Code (ex: CBDK.JK):", value="CBDK.JK")
+
 # Menggunakan st.columns untuk mengatur layout
 col1, col2 = st.columns(2)  # Baris pertama: 2 kolom
 col3, col4 = st.columns(2)  # Baris kedua: 2 kolom
 
 # Input di baris pertama
 with col1:
-    target_stock = st.text_input("Stock Target Code (ex: CBDK.JK):", value="CBDK.JK")
+    target_aset = st.number_input("Total Aset Target (in IDR):", value=18156999226)
 with col2:
-    target_roa = st.number_input("Return on Assets (RoA) Target (%):", value=14.69)
-
+    target_eku = st.number_input("Total Ekuitas Target (in IDR):", value=8142575417)
+8142575417
 # Input di baris kedua
 with col3:
-    target_mc = st.number_input("Market Cap Target (in IDR):", value=624462420000)
+    target_mc = st.number_input("Market Cap Target (in IDR):", value=2301591670000)
 with col4:
-    target_roe = st.number_input("Return on Equity (RoE) Target (%):", value=35.61)
+    target_laba = st.number_input("Laba Bersih Periode Tahun Berjalan (in IDR):", value=479102365)
 
 # Daftar pilihan subsektor
 subsektor_options = [
@@ -58,7 +60,7 @@ def calculate_percentage(filtered_table):
     total_percentage = {}
     percentage_details = {}
 
-    for metric, target_value in zip(['RoA', 'Market Cap', 'RoE'], [target_roa, target_mc, target_roe]):
+    for metric, target_value in zip(['Total Aset', 'Total Ekuitas', 'Market Cap', 'Laba Bersih'], [target_aset, target_eku, target_mc, target_laba]):
         differences = abs(filtered_table[metric] - target_value)
         percentage = (differences / abs(target_value)) * 100  # Gunakan abs untuk menghindari pembagian negatif
         filtered_table[f'{metric}_Percentage'] = percentage
@@ -107,9 +109,10 @@ def create_result_df(sorted_stocks, details):
     for stock, _ in sorted_stocks:
         row = {
             'Kode': stock,
-            'RoA': f"{details[stock]['RoA']:.2f}%",
+            'Total Aset': f"{details[stock]['Total Aset']:.2f}%",
+            'Total Ekuitas': f"{details[stock]['Total Ekuitas']:.2f}%",
             'Market Cap': f"{details[stock]['Market Cap']:.2f}%",
-            'RoE': f"{details[stock]['RoE']:.2f}%"
+            'Laba Bersih': f"{details[stock]['Laba Bersih']}%",
         }
         data.append(row)
     return pd.DataFrame(data)
