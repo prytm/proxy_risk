@@ -217,3 +217,11 @@ if min_stocks_without_subsektor:
             st.error(f"Error fetching data for {not_subsektor_stock}: {e}")
 else:
     st.write("Tidak ada hasil yang ditemukan.\n")
+
+st.header("Risk Projection")
+df_var = pd.read_csv('df_var_99.csv')
+subsektor_data = df_var[df_var['Kode'] == subsektor_stock]
+not_subsektor_data = df_var[df_var['Kode'] == not_subsektor_stock]
+
+result_df = pd.concat([subsektor_data, not_subsektor_data], axis=0)
+st.write(result_df)
