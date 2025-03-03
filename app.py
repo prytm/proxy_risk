@@ -23,7 +23,7 @@ with col1:
     target_aset = st.number_input("Total Aset Target (in IDR):", value=18156999226)
 with col2:
     target_eku = st.number_input("Total Ekuitas Target (in IDR):", value=8142575417)
-8142575417
+
 # Input di baris kedua
 with col3:
     target_mc = st.number_input("Market Cap Target (in IDR):", value=2301591670000)
