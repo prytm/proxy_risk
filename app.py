@@ -4,7 +4,7 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 
 # Load data
-final_df = pd.read_csv('final_df.csv', delimiter=',')
+final_df = pd.read_csv('final_df (5).csv', delimiter=',')
 
 # Judul Aplikasi
 st.title('Risk Projection')
