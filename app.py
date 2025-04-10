@@ -230,6 +230,7 @@ target_date_subsektor = final_df[final_df['Kode'] == subsektor_stock]['Date'].il
 try:
     data = yf.download(subsektor_stock, start=pd.to_datetime(target_date_subsektor), end=pd.to_datetime(target_date_subsektor) + pd.DateOffset(months = 3), interval = '1d')['Close']
     daily_returns_1 = ((data.shift(-4) - data) / data).dropna()
+    daily_returns_1.index = pd.to_datetime(daily_returns_1.index)
 
     sma, upper_band, lower_band = calculate_bollinger_bands(daily_returns_1)
 
@@ -237,6 +238,12 @@ try:
     sma = sma.squeeze()
     upper_band = upper_band.squeeze()
     lower_band = lower_band.squeeze()
+
+    common_index = daily_returns_1.index.intersection(sma.index).intersection(upper_band.index).intersection(lower_band.index)
+    daily_returns_1 = daily_returns_1.loc[common_index]
+    sma = sma.loc[common_index]
+    upper_band = upper_band.loc[common_index]
+    lower_band = lower_band.loc[common_index]
 
     plt.style.use('dark_background')  # Gunakan style dark
     
