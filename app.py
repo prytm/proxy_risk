@@ -232,6 +232,7 @@ st.write(target_date_subsektor)
 
 try:
     data = yf.download(subsektor_stock, start=target_date_subsektor, end=pd.to_datetime(target_date_subsektor) + pd.DateOffset(months = 3), interval = '1d')['Close']
+    st.write(data)
     daily_returns_1 = ((data.shift(-4) - data) / data).dropna()
 
     sma, upper_band, lower_band = calculate_bollinger_bands(daily_returns_1)
