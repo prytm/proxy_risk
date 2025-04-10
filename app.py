@@ -227,8 +227,6 @@ st.info("Explore how the daily returns projection with 95% confidence interval M
 subsektor_stock = min_stocks_with_subsektor[0][0]
 target_date_subsektor = final_df[final_df['Kode'] == subsektor_stock]['Date'].iloc[0]
 
-st.write(target_date_subsektor)
-
 try:
     data = yf.download(subsektor_stock, start=pd.to_datetime(target_date_subsektor, dayfirst = True), end=pd.to_datetime(target_date_subsektor, dayfirst = True) + pd.DateOffset(months = 3), interval = '1d')['Close']
     end=pd.to_datetime(target_date_subsektor) + pd.DateOffset(months = 3)
