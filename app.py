@@ -230,7 +230,7 @@ target_date_subsektor = final_df[final_df['Kode'] == subsektor_stock]['Date'].il
 st.write(target_date_subsektor)
 
 try:
-    data = yf.download(subsektor_stock, start=pd.to_datetime(target_date_subsektor), end=pd.to_datetime(target_date_subsektor) + pd.DateOffset(months = 3), interval = '1d')['Close']
+    data = yf.download(subsektor_stock, start=pd.to_datetime(target_date_subsektor, dayfirst = True), end=pd.to_datetime(target_date_subsektor) + pd.DateOffset(months = 3), interval = '1d')['Close']
     end=pd.to_datetime(target_date_subsektor) + pd.DateOffset(months = 3)
     daily_returns_1 = ((data.shift(-4) - data) / data).dropna()
 
