@@ -148,7 +148,7 @@ def compare_with_subsektor():
     if filtered_table.empty:
         filtered_table = comparison_table[ (comparison_table['Kode'] != target_stock)]
     
-    return calculate_percentage(filtered_table, target_aset, target_mc, target_eku, target_laba)
+    return calculate_percentage(filtered_table)
     
 def compare_without_subsektor():
     """
