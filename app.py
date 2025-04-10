@@ -4,6 +4,7 @@ import yfinance as yf
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
+import json
 from scipy.spatial.distance import mahalanobis
 
 # Load data
@@ -172,13 +173,13 @@ def create_result_df(sorted_stocks, details):
     """
     data = []
     for stock, _ in sorted_stocks:
-        row = {
-            'Kode': stock,
-            'Percentage': details[stock],
-        }
+        percentages = json.loads(details[stock])  # konversi string JSON ke dict
+        row = {'Kode': stock}
+        row.update(percentages)  # tambahkan semua key dari dict sebagai kolom
         data.append(row)
-        
-    return pd.DataFrame(data)
+    
+    data = pd.DataFrame(data)
+    return data
 
 # Fungsi untuk menghitung Bollinger Bands
 def calculate_bollinger_bands(data, window=10):
