@@ -8,7 +8,6 @@ from scipy.spatial.distance import mahalanobis
 
 # Load data
 final_df = pd.read_csv('final_df.csv', delimiter=',')
-final_df['Date'] = pd.to_datetime(final_df['Date'])
 df_var = pd.read_csv('df_var_new.csv', delimiter = ',')
 
 st.set_page_config(
@@ -231,7 +230,7 @@ target_date_subsektor = final_df[final_df['Kode'] == subsektor_stock]['Date'].il
 st.write(target_date_subsektor)
 
 try:
-    data = yf.download(subsektor_stock, start=target_date_subsektor, end=pd.to_datetime(target_date_subsektor) + pd.DateOffset(months = 3), interval = '1d')['Close']
+    data = yf.download(subsektor_stock, start=pd.to_datetime(target_date_subsektor), end=pd.to_datetime(target_date_subsektor) + pd.DateOffset(months = 3), interval = '1d')['Close']
     end=pd.to_datetime(target_date_subsektor) + pd.DateOffset(months = 3)
     daily_returns_1 = ((data.shift(-4) - data) / data).dropna()
 
