@@ -173,13 +173,15 @@ def create_result_df(sorted_stocks, details):
     """
     data = []
     for stock, _ in sorted_stocks:
-        percentages = json.loads(details[stock])  # konversi string JSON ke dict
-        row = {'Kode': stock}
-        row.update(percentages)  # tambahkan semua key dari dict sebagai kolom
+        row = {
+            'Kode': stock,
+            'Total Aset': f"{details[stock]['Total Aset']:.2f}%",
+            'Total Ekuitas': f"{details[stock]['Total Ekuitas']:.2f}%",
+            'Market Cap': f"{details[stock]['Market Cap']:.2f}%",
+            'Laba Bersih': f"{details[stock]['Laba Bersih']:.2f}%",
+        }
         data.append(row)
-    
-    data = pd.DataFrame(data)
-    return data
+    return pd.DataFrame(data)
 
 # Fungsi untuk menghitung Bollinger Bands
 def calculate_bollinger_bands(data, window=10):
