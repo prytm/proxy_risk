@@ -194,7 +194,7 @@ def calculate_bollinger_bands(data, window=10):
     return sma, upper_band, lower_band
 
 # Tampilkan hasil dengan subsektor jika ada
-st.title("Mahalanobis Risk-Projection Model")
+st.title("Similarity Based Risk-Projection Model")
 
 # Tabel Input
 input_data = {
